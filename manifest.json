@@ -12,9 +12,10 @@
     ],
         {
             "nombre":  "Mediciones categoria 2013",
-            "archivo": "leeme.xlsx"
+            "archivo": "Infantiles_2013.xlsx"
         }
     ],
+
     "informes": [
         {
             "nombre":  "Informe Equipo CAT 2014 | Junio 2025",
