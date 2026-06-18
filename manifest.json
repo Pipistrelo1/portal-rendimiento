@@ -1,5 +1,5 @@
 {
-    "nombre":       "Portal de Rendimiento",
+    "nombre":       "Riestra infantiles 2026",
     "actualizado":  "Junio 2025",
 
     "passwordHash": "8c83fd79625c33c150f2597d9b1fdceb76deb0c3a5fe4ec5a92ccd2bd0d94b1f",
@@ -10,10 +10,6 @@
             "archivo": "Valores_2014_evolución.xlsx"
         }
     ],
-    {
-        "nombre":  "Mediciones categoria 2015",
-        "archivo": "mediciones-junio-2025.xlsx"
-    },
 
     "informes": [
         {
