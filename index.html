@@ -1,0 +1,911 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Portal de Rendimiento</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <style>
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+        :root {
+            --sidebar-bg:          #0D1721;
+            --sidebar-hover:       rgba(255,255,255,0.05);
+            --sidebar-active-bg:   rgba(0,200,151,0.13);
+            --sidebar-text:        rgba(255,255,255,0.42);
+            --sidebar-text-hover:  rgba(255,255,255,0.88);
+            --sidebar-text-active: #00C897;
+            --sidebar-label:       rgba(255,255,255,0.18);
+            --sidebar-divider:     rgba(255,255,255,0.07);
+            --sidebar-w:           256px;
+            --header-bg:           #08101A;
+            --header-h:            58px;
+            --accent:              #00C897;
+            --accent-hover:        #00b387;
+            --main-bg:             #EDF0F5;
+            --card:                #FFFFFF;
+            --card-shadow:         0 0 0 1px rgba(0,0,0,0.05), 0 2px 14px rgba(0,0,0,0.06);
+            --th-bg:               #1A2535;
+            --th-text:             rgba(255,255,255,0.80);
+            --tr-alt:              #F7F9FB;
+            --tr-hover:            rgba(0,200,151,0.05);
+            --border:              #E5E8ED;
+            --text:                #111827;
+            --text-2:              #5F6B7A;
+            --text-3:              #9BA5B4;
+            --badge-xl-bg:         #ECFDF5;
+            --badge-xl-text:       #065F46;
+            --badge-pdf-bg:        #FFF7ED;
+            --badge-pdf-text:      #7C2D12;
+            --err-bg:              #FEF2F2;
+            --err-text:            #991B1B;
+            --err-border:          #FCA5A5;
+            --r:                   10px;
+            --font:                'Space Grotesk', system-ui, -apple-system, sans-serif;
+        }
+
+        body {
+            font-family: var(--font);
+            background: var(--main-bg);
+            color: var(--text);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            font-size: 14px;
+            line-height: 1.5;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        /* ─── LOGIN OVERLAY ───────────────────────────── */
+        #loginOverlay {
+            position: fixed;
+            inset: 0;
+            background: #080F18;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 9999;
+            padding: 20px;
+        }
+
+        .login-card {
+            width: 100%;
+            max-width: 380px;
+            background: #111D2B;
+            border: 1px solid rgba(255,255,255,0.07);
+            border-radius: 16px;
+            padding: 40px 36px;
+            box-shadow: 0 24px 80px rgba(0,0,0,0.5);
+        }
+
+        .login-brand {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 32px;
+        }
+
+        .login-dot {
+            width: 9px; height: 9px;
+            background: var(--accent);
+            border-radius: 50%;
+            box-shadow: 0 0 12px var(--accent);
+            flex-shrink: 0;
+        }
+
+        .login-name {
+            font-size: 15px;
+            font-weight: 700;
+            color: #fff;
+            letter-spacing: -0.2px;
+        }
+
+        .login-title {
+            font-size: 22px;
+            font-weight: 700;
+            color: #fff;
+            letter-spacing: -0.4px;
+            margin-bottom: 6px;
+        }
+
+        .login-subtitle {
+            font-size: 13.5px;
+            color: rgba(255,255,255,0.35);
+            margin-bottom: 28px;
+            line-height: 1.5;
+        }
+
+        .login-label {
+            display: block;
+            font-size: 12px;
+            font-weight: 600;
+            color: rgba(255,255,255,0.45);
+            text-transform: uppercase;
+            letter-spacing: 0.7px;
+            margin-bottom: 8px;
+        }
+
+        .login-input-wrap {
+            position: relative;
+            margin-bottom: 12px;
+        }
+
+        .login-input {
+            width: 100%;
+            padding: 12px 46px 12px 16px;
+            background: rgba(255,255,255,0.05);
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 8px;
+            color: #fff;
+            font-family: var(--font);
+            font-size: 15px;
+            font-weight: 500;
+            letter-spacing: 0.5px;
+            outline: none;
+            transition: border-color 0.15s, box-shadow 0.15s;
+        }
+
+        .login-input:focus {
+            border-color: var(--accent);
+            box-shadow: 0 0 0 3px rgba(0,200,151,0.15);
+        }
+
+        .login-input::placeholder {
+            color: rgba(255,255,255,0.18);
+            letter-spacing: 0;
+            font-size: 14px;
+        }
+
+        .toggle-pass {
+            position: absolute;
+            right: 14px; top: 50%;
+            transform: translateY(-50%);
+            background: none; border: none;
+            color: rgba(255,255,255,0.28);
+            cursor: pointer; padding: 4px;
+            line-height: 0;
+            transition: color 0.15s;
+        }
+
+        .toggle-pass:hover { color: rgba(255,255,255,0.7); }
+
+        .login-error {
+            display: none;
+            background: rgba(239,68,68,0.1);
+            border: 1px solid rgba(239,68,68,0.25);
+            border-radius: 7px;
+            padding: 10px 14px;
+            font-size: 13px;
+            color: #FCA5A5;
+            margin-bottom: 16px;
+        }
+
+        .login-error.visible { display: block; }
+
+        .login-btn {
+            width: 100%;
+            padding: 13px;
+            background: var(--accent);
+            color: #fff;
+            border: none;
+            border-radius: 8px;
+            font-family: var(--font);
+            font-size: 14.5px;
+            font-weight: 700;
+            cursor: pointer;
+            letter-spacing: -0.1px;
+            transition: background 0.15s, transform 0.1s;
+            margin-top: 4px;
+        }
+
+        .login-btn:hover   { background: var(--accent-hover); }
+        .login-btn:active  { transform: scale(0.99); }
+        .login-btn:disabled {
+            opacity: 0.55;
+            cursor: not-allowed;
+        }
+
+        .login-spinner {
+            display: none;
+            width: 18px; height: 18px;
+            border: 2px solid rgba(255,255,255,0.3);
+            border-top-color: white;
+            border-radius: 50%;
+            animation: spin 0.7s linear infinite;
+            margin: 0 auto;
+        }
+
+        /* ─── HEADER ──────────────────────────────────── */
+        .header {
+            height: var(--header-h);
+            background: var(--header-bg);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 22px;
+            flex-shrink: 0;
+            position: sticky; top: 0; z-index: 200;
+            border-bottom: 1px solid rgba(255,255,255,0.05);
+        }
+
+        .brand { display: flex; align-items: center; gap: 11px; }
+
+        .brand-dot {
+            width: 8px; height: 8px;
+            background: var(--accent); border-radius: 50%;
+            box-shadow: 0 0 10px var(--accent); flex-shrink: 0;
+        }
+
+        .brand-name { font-size: 15px; font-weight: 700; color: #FFF; letter-spacing: -0.2px; }
+        .brand-sep  { width: 1px; height: 16px; background: rgba(255,255,255,0.13); margin: 0 2px; }
+        .brand-sub  { font-size: 12px; color: rgba(255,255,255,0.32); font-weight: 400; }
+
+        .header-right {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .header-date {
+            font-size: 11.5px;
+            color: rgba(255,255,255,0.28);
+            text-align: right;
+            line-height: 1.5;
+        }
+
+        .logout-btn {
+            padding: 6px 14px;
+            background: rgba(255,255,255,0.06);
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 6px;
+            color: rgba(255,255,255,0.45);
+            font-family: var(--font);
+            font-size: 12px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: background 0.15s, color 0.15s;
+            white-space: nowrap;
+        }
+
+        .logout-btn:hover {
+            background: rgba(255,255,255,0.1);
+            color: rgba(255,255,255,0.8);
+        }
+
+        /* ─── LAYOUT ──────────────────────────────────── */
+        .app { display: flex; flex: 1; overflow: hidden; height: calc(100vh - var(--header-h)); }
+
+        /* ─── SIDEBAR ─────────────────────────────────── */
+        .sidebar {
+            width: var(--sidebar-w);
+            background: var(--sidebar-bg);
+            flex-shrink: 0; overflow-y: auto;
+            display: flex; flex-direction: column;
+            border-right: 1px solid rgba(255,255,255,0.05);
+        }
+
+        .sidebar::-webkit-scrollbar { width: 3px; }
+        .sidebar::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.08); border-radius: 4px; }
+
+        .sb-section { padding: 22px 12px 6px; }
+        .sb-section + .sb-section {
+            border-top: 1px solid var(--sidebar-divider);
+            margin-top: 10px; padding-top: 22px;
+        }
+
+        .sb-label {
+            font-size: 10px; font-weight: 600;
+            text-transform: uppercase; letter-spacing: 1px;
+            color: var(--sidebar-label); padding: 0 10px; margin-bottom: 7px;
+        }
+
+        .nav-btn {
+            width: 100%;
+            display: flex; align-items: center; gap: 9px;
+            padding: 9px 10px; border-radius: 7px;
+            background: transparent; border: none;
+            border-left: 2px solid transparent;
+            color: var(--sidebar-text);
+            font-family: var(--font); font-size: 13.5px; font-weight: 500;
+            cursor: pointer;
+            transition: background 0.14s, color 0.14s, border-color 0.14s;
+            text-align: left; margin-bottom: 2px;
+        }
+
+        .nav-btn:hover  { background: var(--sidebar-hover); color: var(--sidebar-text-hover); }
+        .nav-btn.active {
+            background: var(--sidebar-active-bg);
+            color: var(--sidebar-text-active);
+            border-left-color: var(--accent); font-weight: 600;
+        }
+
+        .nav-icon  { font-size: 13px; flex-shrink: 0; width: 18px; text-align: center; }
+        .nav-label { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .sb-empty  { font-size: 12px; color: var(--sidebar-label); padding: 4px 10px 8px; font-style: italic; }
+
+        /* ─── MAIN ────────────────────────────────────── */
+        .main { flex: 1; overflow-y: auto; padding: 28px 28px 48px; }
+        .main::-webkit-scrollbar { width: 5px; }
+        .main::-webkit-scrollbar-thumb { background: #C8CDD4; border-radius: 5px; }
+
+        /* ─── WELCOME ─────────────────────────────────── */
+        .welcome {
+            height: 100%; display: flex; flex-direction: column;
+            align-items: center; justify-content: center;
+            gap: 10px; text-align: center; padding: 40px 20px;
+        }
+
+        .welcome-glyph { font-size: 44px; margin-bottom: 6px; }
+        .welcome-h     { font-size: 20px; font-weight: 700; letter-spacing: -0.3px; }
+        .welcome-p     { font-size: 13.5px; color: var(--text-3); max-width: 280px; line-height: 1.65; }
+
+        /* ─── CONTENT HEADER ──────────────────────────── */
+        .content-header {
+            display: flex; align-items: flex-start;
+            justify-content: space-between;
+            margin-bottom: 20px; gap: 12px;
+        }
+
+        .content-title { font-size: 19px; font-weight: 700; letter-spacing: -0.3px; line-height: 1.2; }
+        .content-sub   { font-size: 13px; color: var(--text-3); margin-top: 3px; }
+
+        .badge {
+            display: inline-flex; align-items: center; gap: 5px;
+            padding: 5px 12px; border-radius: 20px;
+            font-size: 12px; font-weight: 600; flex-shrink: 0;
+        }
+
+        .badge-xl  { background: var(--badge-xl-bg);  color: var(--badge-xl-text); }
+        .badge-pdf { background: var(--badge-pdf-bg); color: var(--badge-pdf-text); }
+
+        /* ─── SHEET TABS ──────────────────────────────── */
+        .tabs-bar {
+            display: flex; gap: 2px;
+            border-bottom: 1.5px solid var(--border); margin-bottom: 18px;
+        }
+
+        .tab-btn {
+            padding: 8px 16px;
+            font-family: var(--font); font-size: 13px; font-weight: 500;
+            color: var(--text-2); background: none; border: none;
+            border-bottom: 2px solid transparent; margin-bottom: -1.5px;
+            cursor: pointer; border-radius: 4px 4px 0 0;
+            transition: color 0.14s, background 0.14s;
+        }
+
+        .tab-btn:hover { color: var(--text); background: rgba(0,0,0,0.03); }
+        .tab-btn.active { color: var(--accent); border-bottom-color: var(--accent); font-weight: 600; }
+
+        /* ─── TOOLBAR ─────────────────────────────────── */
+        .toolbar { display: flex; align-items: center; gap: 12px; margin-bottom: 14px; flex-wrap: wrap; }
+
+        .search-wrap { position: relative; flex: 1; max-width: 320px; }
+
+        .search-icon {
+            position: absolute; left: 11px; top: 50%;
+            transform: translateY(-50%); pointer-events: none; color: var(--text-3);
+        }
+
+        .search-input {
+            width: 100%; padding: 8px 12px 8px 36px;
+            border: 1px solid var(--border); border-radius: 7px;
+            font-family: var(--font); font-size: 13.5px;
+            color: var(--text); background: var(--card); outline: none;
+            transition: border-color 0.15s, box-shadow 0.15s;
+        }
+
+        .search-input:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(0,200,151,0.13); }
+        .search-input::placeholder { color: var(--text-3); }
+        .row-count { font-size: 12.5px; color: var(--text-3); font-weight: 500; white-space: nowrap; }
+
+        /* ─── TABLE ───────────────────────────────────── */
+        .table-card { background: var(--card); border-radius: var(--r); box-shadow: var(--card-shadow); overflow: auto; }
+
+        table { width: 100%; border-collapse: collapse; font-size: 13.5px; }
+
+        thead th {
+            background: var(--th-bg); color: var(--th-text);
+            padding: 11px 16px; text-align: left;
+            font-size: 12px; font-weight: 600; letter-spacing: 0.2px;
+            white-space: nowrap; cursor: pointer; user-select: none;
+            position: sticky; top: 0; transition: background 0.12s;
+        }
+
+        thead th:hover { background: #1f2f46; }
+        thead th.sort-asc::after  { content: " ↑"; color: var(--accent); }
+        thead th.sort-desc::after { content: " ↓"; color: var(--accent); }
+
+        tbody tr { border-bottom: 1px solid var(--border); transition: background 0.1s; }
+        tbody tr:last-child { border-bottom: none; }
+        tbody tr:nth-child(even) { background: var(--tr-alt); }
+        tbody tr:hover { background: var(--tr-hover); }
+        tbody td { padding: 10px 16px; white-space: nowrap; }
+        tbody td:first-child { font-weight: 500; }
+        .no-rows { text-align: center; padding: 48px 20px; color: var(--text-3); font-size: 14px; }
+
+        /* ─── PDF VIEWER ──────────────────────────────── */
+        .pdf-card { background: var(--card); border-radius: var(--r); box-shadow: var(--card-shadow); overflow: hidden; }
+
+        .pdf-frame {
+            width: 100%; height: calc(100vh - var(--header-h) - 128px);
+            min-height: 500px; border: none; display: block;
+        }
+
+        .pdf-fallback {
+            padding: 14px 22px; border-top: 1px solid var(--border);
+            display: flex; align-items: center; gap: 12px; flex-wrap: wrap;
+        }
+
+        .pdf-fallback-text { font-size: 12.5px; color: var(--text-3); }
+
+        .pdf-open-btn {
+            display: inline-flex; align-items: center; gap: 6px;
+            padding: 7px 16px; background: var(--accent); color: #fff;
+            border-radius: 6px; text-decoration: none;
+            font-size: 13px; font-weight: 600; transition: opacity 0.15s;
+        }
+
+        .pdf-open-btn:hover { opacity: 0.86; }
+
+        /* ─── LOADING ─────────────────────────────────── */
+        .loading-state {
+            display: flex; flex-direction: column;
+            align-items: center; justify-content: center;
+            padding: 80px 20px; gap: 14px; color: var(--text-3); font-size: 14px;
+        }
+
+        .spinner {
+            width: 32px; height: 32px;
+            border: 3px solid var(--border);
+            border-top-color: var(--accent);
+            border-radius: 50%;
+            animation: spin 0.75s linear infinite;
+        }
+
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        /* ─── ERROR ───────────────────────────────────── */
+        .error-card {
+            background: var(--err-bg); border: 1px solid var(--err-border);
+            border-radius: 8px; padding: 20px 24px;
+            color: var(--err-text); font-size: 14px; line-height: 1.6;
+        }
+
+        /* ─── MOBILE ──────────────────────────────────── */
+        .mobile-bar {
+            display: none; background: var(--sidebar-bg);
+            padding: 10px 14px;
+            border-bottom: 1px solid rgba(255,255,255,0.06);
+        }
+
+        .mobile-select {
+            width: 100%; padding: 9px 34px 9px 12px;
+            background: rgba(255,255,255,0.07)
+                url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%2300C897' stroke-width='2.5'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E")
+                no-repeat right 12px center;
+            border: 1px solid rgba(255,255,255,0.1); border-radius: 7px;
+            color: rgba(255,255,255,0.88);
+            font-family: var(--font); font-size: 13.5px;
+            appearance: none; cursor: pointer; outline: none;
+        }
+
+        .mobile-select option   { background: #1A2535; color: #fff; }
+        .mobile-select optgroup { font-size: 11px; color: rgba(255,255,255,0.4); }
+
+        @media (max-width: 800px) {
+            .sidebar    { display: none; }
+            .mobile-bar { display: block; }
+            .main       { padding: 18px 14px 36px; }
+            .content-header { flex-direction: column; align-items: flex-start; }
+            .search-wrap { max-width: 100%; }
+            .header-date { display: none; }
+        }
+
+        @media (max-width: 480px) {
+            .brand-sep, .brand-sub { display: none; }
+            .login-card { padding: 32px 24px; }
+        }
+    </style>
+</head>
+<body>
+
+<!-- ── LOGIN OVERLAY ──────────────────────────────────── -->
+<div id="loginOverlay">
+    <div class="login-card">
+        <div class="login-brand">
+            <div class="login-dot"></div>
+            <span class="login-name" id="loginPortalName">Portal de Rendimiento</span>
+        </div>
+        <div class="login-title">Acceso restringido</div>
+        <div class="login-subtitle">Ingresá la contraseña para acceder al portal.</div>
+
+        <label class="login-label" for="passInput">Contraseña</label>
+        <div class="login-input-wrap">
+            <input
+                type="password"
+                id="passInput"
+                class="login-input"
+                placeholder="Ingresá la contraseña"
+                autocomplete="current-password"
+                onkeydown="if(event.key==='Enter') submitLogin()"
+            >
+            <button class="toggle-pass" type="button" onclick="togglePass()" title="Mostrar/ocultar">
+                <svg id="eyeIcon" width="18" height="18" viewBox="0 0 24 24" fill="none"
+                    stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+                    <circle cx="12" cy="12" r="3"/>
+                </svg>
+            </button>
+        </div>
+
+        <div class="login-error" id="loginError">
+            Contraseña incorrecta. Intentá de nuevo.
+        </div>
+
+        <button class="login-btn" id="loginBtn" onclick="submitLogin()">
+            <span id="loginBtnText">Ingresar al portal</span>
+            <div class="login-spinner" id="loginSpinner"></div>
+        </button>
+    </div>
+</div>
+
+<!-- ── HEADER ─────────────────────────────────────────── -->
+<header class="header">
+    <div class="brand">
+        <div class="brand-dot"></div>
+        <span class="brand-name" id="portalName">Portal de Rendimiento</span>
+        <div class="brand-sep"></div>
+        <span class="brand-sub">Datos Antropométricos</span>
+    </div>
+    <div class="header-right">
+        <div class="header-date" id="headerDate"></div>
+        <button class="logout-btn" onclick="logout()">Cerrar sesión</button>
+    </div>
+</header>
+
+<!-- ── MOBILE SELECTOR ────────────────────────────────── -->
+<div class="mobile-bar">
+    <select class="mobile-select" id="mobileSelect" onchange="handleMobile(this.value)">
+        <option value="">— Seleccioná un archivo —</option>
+    </select>
+</div>
+
+<!-- ── APP ────────────────────────────────────────────── -->
+<div class="app">
+    <aside class="sidebar">
+        <div class="sb-section">
+            <div class="sb-label">📊 Datos / Excel</div>
+            <div id="excelNav"></div>
+        </div>
+        <div class="sb-section">
+            <div class="sb-label">📄 Informes PDF</div>
+            <div id="pdfNav"></div>
+        </div>
+    </aside>
+
+    <main class="main" id="main">
+        <div class="welcome">
+            <div class="welcome-glyph">📋</div>
+            <div class="welcome-h">Seleccioná un archivo</div>
+            <div class="welcome-p">Elegí un Excel o un informe del panel izquierdo para visualizarlo aquí.</div>
+        </div>
+    </main>
+</div>
+
+<script>
+// ── ESTADO ──────────────────────────────────────────────
+let manifest   = null;
+let activeData = [];
+let sortState  = { col: -1, dir: 'asc' };
+let sheets     = {};
+let activeFile = null;
+let sheetNames = [];
+
+const SESSION_KEY = 'portal_auth_v1';
+
+// ── SHA-256 (nativo del navegador, sin librerías) ────────
+async function sha256(text) {
+    const buf  = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(text));
+    return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2,'0')).join('');
+}
+
+// ── LOGIN ────────────────────────────────────────────────
+async function submitLogin() {
+    const input = document.getElementById('passInput').value;
+    if (!input) return;
+
+    const btn     = document.getElementById('loginBtn');
+    const spinner = document.getElementById('loginSpinner');
+    const btnText = document.getElementById('loginBtnText');
+    const errEl   = document.getElementById('loginError');
+
+    btn.disabled      = true;
+    spinner.style.display = 'block';
+    btnText.style.display = 'none';
+    errEl.classList.remove('visible');
+
+    try {
+        // Cargar manifest para obtener el hash
+        const r = await fetch('manifest.json?_=' + Date.now());
+        if (!r.ok) throw new Error('No se pudo verificar');
+        const m = await r.json();
+
+        const hash = await sha256(input);
+
+        if (hash === m.passwordHash) {
+            // ✅ Contraseña correcta
+            sessionStorage.setItem(SESSION_KEY, 'ok');
+            document.getElementById('loginOverlay').style.display = 'none';
+            initApp(m);
+        } else {
+            // ❌ Incorrecta
+            errEl.classList.add('visible');
+            document.getElementById('passInput').value = '';
+            document.getElementById('passInput').focus();
+        }
+    } catch (err) {
+        errEl.textContent = 'Error al conectar. Revisá tu conexión.';
+        errEl.classList.add('visible');
+    }
+
+    btn.disabled          = false;
+    spinner.style.display = 'none';
+    btnText.style.display = 'inline';
+}
+
+function togglePass() {
+    const input = document.getElementById('passInput');
+    const isPass = input.type === 'password';
+    input.type = isPass ? 'text' : 'password';
+    document.getElementById('eyeIcon').innerHTML = isPass
+        ? `<path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94"/>
+           <path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19"/>
+           <line x1="1" y1="1" x2="23" y2="23"/>`
+        : `<path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+           <circle cx="12" cy="12" r="3"/>`;
+}
+
+function logout() {
+    if (!confirm('¿Cerrar sesión?')) return;
+    sessionStorage.removeItem(SESSION_KEY);
+    location.reload();
+}
+
+// ── VERIFICAR SESIÓN AL CARGAR ───────────────────────────
+async function checkSession() {
+    if (sessionStorage.getItem(SESSION_KEY) === 'ok') {
+        // Ya está autenticado en esta sesión, cargar directo
+        try {
+            const r = await fetch('manifest.json?_=' + Date.now());
+            const m = await r.json();
+            document.getElementById('loginOverlay').style.display = 'none';
+            initApp(m);
+        } catch {
+            // Si falla, mostrar login
+        }
+    }
+    // Precargar nombre del portal en pantalla de login
+    try {
+        const r = await fetch('manifest.json?_=' + Date.now());
+        const m = await r.json();
+        if (m.nombre) {
+            document.getElementById('loginPortalName').textContent = m.nombre;
+        }
+    } catch {}
+}
+
+// ── INIT APP (después del login) ─────────────────────────
+function initApp(m) {
+    manifest = m;
+
+    if (m.nombre) {
+        document.getElementById('portalName').textContent = m.nombre;
+        document.title = m.nombre;
+    }
+
+    if (m.actualizado) {
+        document.getElementById('headerDate').innerHTML =
+            `Última actualización<br><strong style="color:rgba(255,255,255,0.6)">${m.actualizado}</strong>`;
+    }
+
+    buildNav();
+    buildMobile();
+}
+
+// ── NAV ──────────────────────────────────────────────────
+function buildNav() {
+    const en = document.getElementById('excelNav');
+    const pn = document.getElementById('pdfNav');
+
+    en.innerHTML = manifest.excels?.length
+        ? manifest.excels.map((f, i) => `
+            <button class="nav-btn" id="nb-x-${i}" onclick="openExcel(${i})">
+                <span class="nav-icon">📊</span>
+                <span class="nav-label">${f.nombre}</span>
+            </button>`).join('')
+        : `<div class="sb-empty">Sin archivos cargados</div>`;
+
+    pn.innerHTML = manifest.informes?.length
+        ? manifest.informes.map((f, i) => `
+            <button class="nav-btn" id="nb-p-${i}" onclick="openPDF(${i})">
+                <span class="nav-icon">📄</span>
+                <span class="nav-label">${f.nombre}</span>
+            </button>`).join('')
+        : `<div class="sb-empty">Sin informes cargados</div>`;
+}
+
+function buildMobile() {
+    const sel = document.getElementById('mobileSelect');
+    if (manifest.excels?.length) {
+        sel.innerHTML += `<optgroup label="📊 Datos / Excel">` +
+            manifest.excels.map((f,i) => `<option value="x-${i}">${f.nombre}</option>`).join('') +
+            `</optgroup>`;
+    }
+    if (manifest.informes?.length) {
+        sel.innerHTML += `<optgroup label="📄 Informes PDF">` +
+            manifest.informes.map((f,i) => `<option value="p-${i}">${f.nombre}</option>`).join('') +
+            `</optgroup>`;
+    }
+}
+
+function handleMobile(val) {
+    if (!val) return;
+    const [type, idx] = val.split('-');
+    if (type === 'x') openExcel(+idx); else openPDF(+idx);
+}
+
+function setActive(id) {
+    document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+    document.getElementById(id)?.classList.add('active');
+}
+
+// ── EXCEL ─────────────────────────────────────────────────
+async function openExcel(idx) {
+    const file = manifest.excels[idx];
+    setActive(`nb-x-${idx}`);
+    setMain(`<div class="loading-state"><div class="spinner"></div><div>Cargando ${file.nombre}…</div></div>`);
+
+    try {
+        const r = await fetch(`archivos/excel/${file.archivo}?_=${Date.now()}`);
+        if (!r.ok) throw new Error(`Archivo no encontrado: ${file.archivo}`);
+        const buf = await r.arrayBuffer();
+        const wb  = XLSX.read(buf, { type: 'array', cellDates: true });
+
+        sheets = {};
+        wb.SheetNames.forEach(name => {
+            const data = XLSX.utils.sheet_to_json(wb.Sheets[name], { defval: '' });
+            if (data.length) sheets[name] = data;
+        });
+
+        const names = Object.keys(sheets);
+        if (!names.length) throw new Error('El archivo no tiene datos tabulares.');
+
+        activeFile = file;
+        sheetNames = names;
+        renderExcel(names[0]);
+
+    } catch (err) { showError(err.message); }
+}
+
+function renderExcel(activeSheet) {
+    const data = sheets[activeSheet] || [];
+    activeData = data;
+    sortState  = { col: -1, dir: 'asc' };
+    const cols = data.length ? Object.keys(data[0]) : [];
+
+    const tabsHTML = sheetNames.length > 1
+        ? `<div class="tabs-bar">${sheetNames.map(n =>
+            `<button class="tab-btn${n === activeSheet ? ' active' : ''}"
+                onclick="renderExcel('${n.replace(/'/g,"\\'")}')">
+                ${n}</button>`).join('')}</div>`
+        : '';
+
+    setMain(`
+        <div class="content-header">
+            <div>
+                <div class="content-title">${activeFile.nombre}</div>
+                <div class="content-sub">${activeSheet} · ${data.length} registros</div>
+            </div>
+            <span class="badge badge-xl">📊 Excel</span>
+        </div>
+        ${tabsHTML}
+        <div class="toolbar">
+            <div class="search-wrap">
+                <svg class="search-icon" width="15" height="15" viewBox="0 0 24 24"
+                    fill="none" stroke="currentColor" stroke-width="2">
+                    <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
+                </svg>
+                <input type="text" class="search-input" id="searchInput"
+                    placeholder="Buscar en la tabla…" oninput="filterTable()">
+            </div>
+            <span class="row-count" id="rowCount">${data.length} registros</span>
+        </div>
+        <div class="table-card">
+            <table>
+                <thead><tr>${cols.map((c, i) =>
+                    `<th onclick="sortTable(${i},'${c.replace(/'/g,"\\'")}')">
+                        ${c}</th>`).join('')}</tr></thead>
+                <tbody id="tbody">${buildRows(data, cols)}</tbody>
+            </table>
+        </div>`);
+}
+
+function buildRows(data, cols) {
+    if (!data.length)
+        return `<tr><td class="no-rows" colspan="${cols.length||1}">Sin resultados</td></tr>`;
+    return data.map(row =>
+        `<tr>${cols.map(c => `<td>${row[c] ?? ''}</td>`).join('')}</tr>`).join('');
+}
+
+function filterTable() {
+    const q    = document.getElementById('searchInput').value.toLowerCase().trim();
+    const cols = activeData.length ? Object.keys(activeData[0]) : [];
+    const out  = q ? activeData.filter(r =>
+        Object.values(r).some(v => String(v).toLowerCase().includes(q))) : activeData;
+    document.getElementById('tbody').innerHTML     = buildRows(out, cols);
+    document.getElementById('rowCount').textContent = `${out.length} registros`;
+}
+
+function sortTable(colIdx, colName) {
+    document.querySelectorAll('thead th').forEach(t =>
+        t.classList.remove('sort-asc','sort-desc'));
+    sortState.dir = sortState.col === colIdx
+        ? (sortState.dir === 'asc' ? 'desc' : 'asc') : 'asc';
+    sortState.col = colIdx;
+    document.querySelectorAll('thead th')[colIdx].classList.add(`sort-${sortState.dir}`);
+
+    const cols = activeData.length ? Object.keys(activeData[0]) : [];
+    activeData = [...activeData].sort((a, b) => {
+        const va = a[colName], vb = b[colName];
+        const na = parseFloat(va), nb = parseFloat(vb);
+        if (!isNaN(na) && !isNaN(nb))
+            return sortState.dir === 'asc' ? na - nb : nb - na;
+        return sortState.dir === 'asc'
+            ? String(va).localeCompare(String(vb),'es')
+            : String(vb).localeCompare(String(va),'es');
+    });
+
+    const q   = document.getElementById('searchInput')?.value.toLowerCase().trim() || '';
+    const out = q ? activeData.filter(r =>
+        Object.values(r).some(v => String(v).toLowerCase().includes(q))) : activeData;
+    document.getElementById('tbody').innerHTML     = buildRows(out, cols);
+    document.getElementById('rowCount').textContent = `${out.length} registros`;
+}
+
+// ── PDF ───────────────────────────────────────────────────
+function openPDF(idx) {
+    const file = manifest.informes[idx];
+    setActive(`nb-p-${idx}`);
+    const url = `archivos/informes/${file.archivo}`;
+    setMain(`
+        <div class="content-header">
+            <div>
+                <div class="content-title">${file.nombre}</div>
+                <div class="content-sub">${file.fecha || ''}</div>
+            </div>
+            <span class="badge badge-pdf">📄 PDF</span>
+        </div>
+        <div class="pdf-card">
+            <iframe class="pdf-frame" src="${url}" title="${file.nombre}"></iframe>
+            <div class="pdf-fallback">
+                <span class="pdf-fallback-text">¿No se muestra el PDF?</span>
+                <a class="pdf-open-btn" href="${url}" target="_blank">↗ Abrir en nueva pestaña</a>
+            </div>
+        </div>`);
+}
+
+// ── HELPERS ───────────────────────────────────────────────
+function setMain(html) { document.getElementById('main').innerHTML = html; }
+function showError(msg) {
+    setMain(`<div class="error-card"><strong>No se pudo cargar el archivo.</strong><br>${msg}</div>`);
+}
+
+// ── ARRANCAR ──────────────────────────────────────────────
+checkSession();
+document.getElementById('passInput').focus();
+</script>
+</body>
+</html>

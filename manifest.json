@@ -1,0 +1,21 @@
+{
+    "nombre":       "Portal de Rendimiento",
+    "actualizado":  "Junio 2025",
+
+    "passwordHash": "fa723a05ecf28b0ce8bc03b306b2113c9b31287408d5b163069d7a097f834104",
+
+    "excels": [
+        {
+            "nombre":  "Mediciones Junio 2025",
+            "archivo": "mediciones-junio-2025.xlsx"
+        }
+    ],
+
+    "informes": [
+        {
+            "nombre":  "Informe Equipo A — Junio 2025",
+            "archivo": "informe-equipo-a-junio-2025.pdf",
+            "fecha":   "Junio 2025"
+        }
+    ]
+}
